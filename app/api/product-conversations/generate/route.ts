@@ -1,4 +1,5 @@
 import { geminiModel } from "@/lib/gemini";
+import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
 import { z } from "zod";
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    data.slug = slugify(data.slug || "", { lower: true, strict: true });
+    data.slug = slugify(data.slug || "", { lower: true, strict: true }) + `-${nanoid(5)}`;
 
     return NextResponse.json(data);
   } catch (error) {
