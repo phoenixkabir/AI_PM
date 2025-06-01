@@ -1,14 +1,14 @@
 from dotenv import load_dotenv
 
 from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions
+from livekit.agents import AgentSession, Agent, RoomInputOptions, ConversationItemAddedEvent, UserInputTranscribedEvent, StopResponse
 from livekit.plugins import (
     google,
     noise_cancellation,
 )
+from livekit.agents.llm import AudioContent, ChatContext, ChatMessage
 
 load_dotenv()
-
 
 class Assistant(Agent):
     def __init__(self) -> None:
@@ -62,6 +62,12 @@ async def entrypoint(ctx: agents.JobContext):
         ),
     )
 
+    @session.on("conversation_item_added")
+    def on_conversation_item_added(event: ConversationItemAddedEvent):
+        print(f"Conversation item added from {event.item.role}: {event.item.text_content}. interrupted: {event.item.interrupted}")
+        for content in event.item.content:
+            if isinstance(content, AudioContent):
+                print(f" - audio: {content.frame}, transcript: {content.transcript}")
 
 if __name__ == "__main__":
     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))

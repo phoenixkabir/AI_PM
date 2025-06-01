@@ -28,7 +28,7 @@ export const UserFeedback = pgTable("user_feedback", {
   // Structure: [{ role: 'user', content: '...' }, { role: 'ai', content: '...' }]
 
   userData: jsonb("user_data"),
-  // Example: { name: "Visakha", occupation: "girlfriend", location: "aditya's heart" }
+  // Example: { name: "Vishakha", occupation: "girlfriend", location: "aditya's heart" }
 
   status: feedbackStatusEnum("status").notNull().default("initiated"),
   metadata: jsonb("metadata"),
