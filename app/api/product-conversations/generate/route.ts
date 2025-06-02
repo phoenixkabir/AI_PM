@@ -3,6 +3,8 @@ import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
 import { z } from "zod";
+import { db } from "@/db";
+import { GeneratedConversations } from "@/db/schema";
 
 const promptSchema = z.object({
   userPrompt: z.string().min(10, "Prompt must be at least 10 characters"),
@@ -13,6 +15,7 @@ You are given a user prompt describing a product and possibly a feature or conce
 1. Convert it into a system-level prompt suitable for an AI feedback agent.
 2. Extract a slug by combining product and feature name if possible.
 3. Generate 3 to 5 short feedback questions.
+4. ALWAYS MAKE SURE THAT YOU GENERATE QUESTIONS IN HINGLISH (COMBINATION OF ENGLISH AND HINDI MIXED TOGETHER).
 
 Respond only in JSON format like this:
 {
@@ -44,7 +47,6 @@ export async function POST(req: NextRequest) {
         .replace(/```$/, "")
         .trim();
     }
-    console.log(text);
 
     let data;
     try {
@@ -58,6 +60,13 @@ export async function POST(req: NextRequest) {
     }
 
     data.slug = slugify(data.slug || "", { lower: true, strict: true }) + `-${nanoid(5)}`;
+
+    // Save the generated data to the database
+    await db.insert(GeneratedConversations).values({
+      slug: data.slug,
+      systemPrompt: data.systemPrompt,
+      questions: data.questions,
+    });
 
     return NextResponse.json(data);
   } catch (error) {

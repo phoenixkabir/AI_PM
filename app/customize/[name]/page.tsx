@@ -5,13 +5,50 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, ArrowRight, PlusCircle, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChangeEvent } from "react";
+import { useParams, useRouter } from "next/navigation";
+import axios from "axios";
+import { ProductConversation } from "@/app/api/product-conversations/server-actions";
+
+interface ConversationData {
+  slug: string;
+  systemPrompt: string;
+  questions: string[];
+}
 
 export default function CustomizePage() {
+  const params = useParams();
+  const router = useRouter();
+  const slug = params.name as string;
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [agentName, setAgentName] = useState("");
   const [primaryQuestions, setPrimaryQuestions] = useState([""]);
   const [objective, setObjective] = useState("");
+
+  useEffect(() => {
+    const fetchConversationData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch the generated conversation data using the slug
+        const { data } = await axios.get<ConversationData>(`/api/product-conversations/generated/${slug}`);
+        
+        // Populate the form with the fetched data
+        setAgentName(data.slug.split('-').slice(0, -1).join('-') || data.slug); // Remove the nanoid suffix
+        setObjective(data.systemPrompt);
+        setPrimaryQuestions(data.questions.length > 0 ? data.questions : [""]);
+      } catch (error) {
+        console.error("Failed to fetch conversation data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (slug) {
+      fetchConversationData();
+    }
+  }, [slug]);
 
   const updateQuestion = (index: number, value: string) => {
     const newQuestions = [...primaryQuestions];
@@ -42,11 +79,23 @@ export default function CustomizePage() {
       uniqueName: agentName,
       systemPrompt: objective,
       questions: filteredQuestions,
-      metadata: {},
     };
 
-    console.log("Submitting:", payload);
+    try {
+      const {data} = await axios.post<{data: ProductConversation}>('/api/product-conversations', payload);
+      router.push(`/agent/${data.data.uniqueName}`);
+    } catch (error) {
+      console.error("Error saving agent:", error);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10 max-w-3xl flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10 max-w-3xl flex flex-col gap-4">
@@ -117,20 +166,19 @@ export default function CustomizePage() {
       </div>
 
       <div className="flex justify-between">
-        <Button variant="outline" className="flex items-center gap-1">
-          <ArrowLeft size={16} />
-          <span>Back</span>
+        <Button variant="outline" className="flex items-center gap-1" asChild>
+          <Link href="/">
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </Link>
         </Button>
 
         <Button
           onClick={handleSubmit}
           className="flex items-center gap-1 self-end"
-          asChild
         >
-          <Link href="/agent">
-            <span>Continue</span>
-            <ArrowRight size={16} />
-          </Link>
+          <span>Continue</span>
+          <ArrowRight size={16} />
         </Button>
       </div>
     </div>

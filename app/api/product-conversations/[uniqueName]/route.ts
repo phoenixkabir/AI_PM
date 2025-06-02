@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, { params }: { params: { uniqueName: 
       .from(UserFeedback)
       .where(and(...whereConditions));
 
-    return NextResponse.json({ data: feedbacks });
+    return NextResponse.json({ data: { ...conversation, feedbacks } });
   } catch (error) {
     console.error("Error fetching feedbacks:", error);
     return NextResponse.json({ error: "Failed to fetch user feedback" }, { status: 500 });

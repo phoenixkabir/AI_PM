@@ -13,6 +13,7 @@ export async function generateProductConversation(
     const { data } = await axios.post<ProductConversationResponse>("/api/product-conversations/generate", {
       userPrompt: productPrompt,
     });
+    
     return data;
   } catch (error) {
     console.error(error);

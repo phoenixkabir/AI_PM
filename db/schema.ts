@@ -13,6 +13,16 @@ export const ProductConversations = pgTable("product_conversations", {
     .default(dayjs().toDate()),
 });
 
+// Table to store temporarily generated conversation data
+export const GeneratedConversations = pgTable("generated_conversations", {
+  slug: varchar("slug", { length: 255 }).notNull().primaryKey(),
+  systemPrompt: text("system_prompt").notNull(),
+  questions: text("questions").array().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  // Auto-expire after 24 hours
+  expiresAt: timestamp("expires_at").notNull().default(dayjs().add(24, 'hour').toDate()),
+});
+
 export const feedbackStatusEnum = pgEnum("feedback_status", ["initiated", "dropped", "completed"]);
 
 export const UserFeedback = pgTable("user_feedback", {

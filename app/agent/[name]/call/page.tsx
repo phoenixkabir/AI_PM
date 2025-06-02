@@ -18,8 +18,11 @@ import { useCallback, useEffect, useState } from "react";
 // @ts-expect-error - TODO: fix this
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { cn } from "@/lib/utils";
+import { useParams } from "next/navigation";
 
 export default function Page() {
+  const params = useParams();
+  const agentName = (params.name as string).replaceAll("-", " ");
   const [room] = useState(new Room());
   const [isConnected, setIsConnected] = useState(false);
 
@@ -59,6 +62,7 @@ export default function Page() {
           <div className="flex w-full h-screen">
             {/* Left sidebar with visualizer */}
             <div className="flex flex-col items-center justify-center p-6">
+              <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
               <div className="w-[300px] h-[150px]">
                 <AgentVisualizer />
               </div>
@@ -73,6 +77,7 @@ export default function Page() {
         ) : (
           <div className="flex w-full h-screen items-center justify-center">
             <div className="flex flex-col items-center justify-center p-6">
+              <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
               <div className="w-[300px] h-[150px]">
                 <AgentVisualizer />
               </div>

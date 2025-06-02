@@ -7,114 +7,124 @@ import { Input } from "@/components/ui/input";
 import { useClipboard } from "@/hooks/useClipboard";
 import { Check, Clipboard, PhoneCall } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-// Feedback item data type
 interface FeedbackItem {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  rating: number;
-  status: "open" | "in-progress" | "resolved";
-  date: string;
+  id: string;
+  feedbackSummary: string | null;
+  transcript: Array<{ role: string; content: string }>;
+  userData: Record<string, any> | null;
+  status: "initiated" | "dropped" | "completed";
+  createdAt: string;
 }
 
-// Mock data
-const mockFeedbackItems: FeedbackItem[] = [
-  {
-    id: 1,
-    title: "Buffering during peak hours",
-    description: "Content buffers frequently during evening hours, especially for 4K content.",
-    category: "Performance",
-    rating: 2,
-    status: "open",
-    date: "2023-11-15",
-  },
-  {
-    id: 2,
-    title: "Subtitles out of sync",
-    description: "Subtitles are consistently about 2 seconds behind the actual dialogue.",
-    category: "Subtitles",
-    rating: 3,
-    status: "in-progress",
-    date: "2023-11-14",
-  },
-  {
-    id: 3,
-    title: "Can't find recently watched shows",
-    description: "The recently watched section is not updating with my latest viewed content.",
-    category: "UI/Navigation",
-    rating: 3,
-    status: "open",
-    date: "2023-11-13",
-  },
-  {
-    id: 4,
-    title: "Audio quality issues",
-    description: "Audio drops out occasionally during dialogue scenes.",
-    category: "Audio",
-    rating: 2,
-    status: "resolved",
-    date: "2023-11-12",
-  },
-  {
-    id: 5,
-    title: "Download feature not working",
-    description: "Unable to download content for offline viewing on iOS device.",
-    category: "Downloads",
-    rating: 1,
-    status: "in-progress",
-    date: "2023-11-11",
-  },
-];
+interface ProductConversation {
+  id: string;
+  uniqueName: string;
+  systemPrompt: string;
+  questions: string[];
+  metadata: Record<string, any> | null;
+  createdAt: string;
+  updatedAt: string;
+  feedbacks: FeedbackItem[];
+}
 
-export default function NetflixFeedbackAgent() {
-  const [shareableUrl] = useState("https://feedback.netflix.com/session/123456");
+export default function AgentPage() {
+  const {name} = useParams();
+  const [shareableUrl] = useState(`https://pratikriya.cream11.live/agent/${name}/call`);
   const { copyStatus, copy } = useClipboard();
-  const [feedbackItems] = useState<FeedbackItem[]>(mockFeedbackItems);
-  const [sortColumn, setSortColumn] = useState<"title" | "rating">("title");
+  const [conversationData, setConversationData] = useState<ProductConversation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<"createdAt" | "status">("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/product-conversations/${name}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        setConversationData(result.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (name) {
+      fetchData();
+    }
+  }, [name]);
 
   const handleCopyLink = () => {
     copy(shareableUrl);
   };
 
-  const toggleSortColumn = (column: "title" | "rating") => {
-    setSortColumn(column);
-  };
-
-  // Render stars for ratings
-  const renderRatingStars = (rating: number) => {
-    return (
-      <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <div
-            key={star}
-            className={`w-4 h-4 rounded-full ${star <= rating ? "bg-red-500" : "bg-gray-700"}`}
-          />
-        ))}
-      </div>
-    );
+  const toggleSortColumn = (column: "createdAt" | "status") => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc");
+    }
   };
 
   // Get status badge class
-  const getStatusBadgeClass = (status: "open" | "in-progress" | "resolved") => {
-    if (status === "open") return "bg-blue-900 text-blue-300";
-    if (status === "in-progress") return "bg-yellow-900 text-yellow-300";
+  const getStatusBadgeClass = (status: "initiated" | "dropped" | "completed") => {
+    if (status === "initiated") return "bg-blue-900 text-blue-300";
+    if (status === "dropped") return "bg-yellow-900 text-yellow-300";
     return "bg-green-900 text-green-300";
   };
 
   // Get status display text
-  const getStatusText = (status: "open" | "in-progress" | "resolved") => {
-    if (status === "open") return "Open";
-    if (status === "in-progress") return "In Progress";
-    return "Resolved";
+  const getStatusText = (status: "initiated" | "dropped" | "completed") => {
+    if (status === "initiated") return "Initiated";
+    if (status === "dropped") return "Dropped";
+    return "Completed";
   };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  // Sort feedbacks
+  const getSortedFeedbacks = () => {
+    if (!conversationData?.feedbacks) return [];
+    
+    return [...conversationData.feedbacks].sort((a, b) => {
+      if (sortColumn === "createdAt") {
+        return sortDirection === "asc" 
+          ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else {
+        // Sort by status
+        const statusOrder = { completed: 0, dropped: 1, initiated: 2 };
+        const diff = statusOrder[a.status] - statusOrder[b.status];
+        return sortDirection === "asc" ? diff : -diff;
+      }
+    });
+  };
+
+  const feedbackCount = conversationData?.feedbacks?.length || 0;
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">
       <header className="p-6">
-        <h1 className="text-4xl font-bold">Netflix Feedback Agent</h1>
+        <h1 className="text-4xl font-bold capitalize">{conversationData?.uniqueName.replaceAll("-", " ") || "Feedback Agent"}</h1>
 
         <div className="flex items-center mt-4 space-x-2">
           {/* User avatars */}
@@ -126,7 +136,7 @@ export default function NetflixFeedbackAgent() {
             ))}
           </div>
           <p className="text-sm text-gray-400">
-            <span className="font-bold">20</span> users have given feedback
+            <span className="font-bold">{feedbackCount}</span> users have given feedback
           </p>
         </div>
       </header>
@@ -148,8 +158,8 @@ export default function NetflixFeedbackAgent() {
             {copyStatus === "copied" ? "Copied!" : "Copy Link"}
           </Button>
           <Button asChild>
-            <Link href="/agent/call">
-              <PhoneCall />
+            <Link href={`/agent/${name}/call`}>
+              <PhoneCall className="mr-2" />
               Talk to Agent
             </Link>
           </Button>
@@ -161,71 +171,88 @@ export default function NetflixFeedbackAgent() {
           <CardHeader className="px-0 pt-0">
             <CardTitle className="text-xl font-bold">Feedbacks</CardTitle>
           </CardHeader>
-          <div className="flex justify-between border-b border-gray-800 pb-2">
-            <div
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={() => toggleSortColumn("title")}
-            >
-              <h3 className="text-sm font-medium">Title</h3>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`${sortColumn === "title" ? "text-white" : "text-gray-400"}`}
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </div>
-            <div
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={() => toggleSortColumn("rating")}
-            >
-              <h3 className="text-sm font-medium">Rating</h3>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`${sortColumn === "rating" ? "text-white" : "text-gray-400"}`}
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Feedback items */}
-          {feedbackItems.map((item) => (
-            <div key={item.id} className="py-4 border-b border-gray-800 flex">
-              <div className="flex-1">
-                <h4 className="font-medium text-sm mb-1">{item.title}</h4>
-                <p className="text-xs text-gray-400 mb-1">{item.description}</p>
-                <div className="text-xs text-gray-500">
-                  {item.category} • {item.date}
-                </div>
-              </div>
-              <div className="flex-1">
-                <div className="mb-2">{renderRatingStars(item.rating)}</div>
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(item.status)}`}
+          
+          {loading ? (
+            <div className="py-8 text-center text-gray-400">Loading feedback data...</div>
+          ) : error ? (
+            <div className="py-8 text-center text-red-400">Error: {error}</div>
+          ) : feedbackCount === 0 ? (
+            <div className="py-8 text-center text-gray-400">No feedback data available yet</div>
+          ) : (
+            <>
+              <div className="flex justify-between border-b border-gray-800 pb-2">
+                <div
+                  className="flex items-center space-x-2 cursor-pointer"
+                  onClick={() => toggleSortColumn("createdAt")}
+                >
+                  <h3 className="text-sm font-medium">Date</h3>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`${sortColumn === "createdAt" ? "text-white" : "text-gray-400"}`}
                   >
-                    {getStatusText(item.status)}
-                  </span>
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
+                <div
+                  className="flex items-center space-x-2 cursor-pointer"
+                  onClick={() => toggleSortColumn("status")}
+                >
+                  <h3 className="text-sm font-medium">Status</h3>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`${sortColumn === "status" ? "text-white" : "text-gray-400"}`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
                 </div>
               </div>
-            </div>
-          ))}
+
+              {/* Feedback items */}
+              {getSortedFeedbacks().map((item) => (
+                <div key={item.id} className="py-4 border-b border-gray-800 flex">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm mb-1">
+                      {item.feedbackSummary || "Feedback #" + item.id.substring(0, 8)}
+                    </h4>
+                    <p className="text-xs text-gray-400 mb-1">
+                      {item.transcript.length > 0 ? 
+                        `${item.transcript.length} messages in conversation` : 
+                        "No transcript available"}
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      {item.userData ? Object.entries(item.userData).map(([key, value]) => 
+                        `${key}: ${value}`).join(' • ') : ''} • {formatDate(item.createdAt)}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 justify-end">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(item.status)}`}
+                      >
+                        {getStatusText(item.status)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </Card>
       </section>
 
@@ -235,8 +262,7 @@ export default function NetflixFeedbackAgent() {
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            // onClick={handlePrevPage}
-            disabled={true} // Replace with logic: currentPage === 1
+            disabled={true}
             aria-label="Previous page"
           >
             <svg
@@ -257,7 +283,6 @@ export default function NetflixFeedbackAgent() {
             variant="outline"
             size="icon"
             className="h-8 w-8 font-bold"
-            // onClick={() => setCurrentPage(1)}
             aria-current="page"
           >
             1
@@ -266,8 +291,7 @@ export default function NetflixFeedbackAgent() {
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            // onClick={handleNextPage}
-            disabled={true} // Replace with logic: currentPage === totalPages
+            disabled={true}
             aria-label="Next page"
           >
             <svg

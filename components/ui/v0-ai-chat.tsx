@@ -87,7 +87,7 @@ export function VercelV0Chat() {
 
     const data = await generateProductConversation(prompt);
     if (data) {
-      router.push(`/agent/${data.slug}`);
+      router.push(`/customize/${data.slug}`);
     }
   };
 
@@ -160,7 +160,7 @@ Pramukh kshetra:
 
 Kripaya ek prakritik mehsoos karne vala samvad banayein jo imaandaar, vistrit pratikriya ko protsahit kare."
             onClick={(prompt) => setPromptValue(prompt)}
-          />
+        />
           <ActionButton
             icon={<MessageSquare className="w-4 h-4" />}
             label="User Anubhav"
