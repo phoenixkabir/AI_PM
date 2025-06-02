@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     try {
       data = JSON.parse(text);
     } catch (err) {
-      console.warn("Failed to parse Gemini response:", text);
+      console.warn("Failed to parse Gemini response:", text, err);
       return NextResponse.json(
         { error: "Gemini API did not return valid JSON", raw: text },
         { status: 502 }

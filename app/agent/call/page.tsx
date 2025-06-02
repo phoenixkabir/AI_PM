@@ -15,7 +15,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { ConnectionState, Room, RoomEvent } from "livekit-client";
 import { useCallback, useEffect, useState } from "react";
-// @ts-ignore
+// @ts-expect-error - TODO: fix this
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +67,7 @@ export default function Page() {
 
             {/* Main content area */}
             <div className={cn(isConnected && "flex-1 p-6")}>
-              <SimpleVoiceAssistant onConnectButtonClicked={onConnectButtonClicked} />
+              <SimpleVoiceAssistant />
             </div>
           </div>
         ) : (
@@ -85,7 +85,7 @@ export default function Page() {
   );
 }
 
-function SimpleVoiceAssistant(props: { onConnectButtonClicked: () => void }) {
+function SimpleVoiceAssistant() {
   const { state: agentState } = useVoiceAssistant();
 
   if (agentState === "disconnected") {
@@ -145,13 +145,13 @@ function StartOrEndCallButton(props: { onConnectButtonClicked: () => void }) {
           <span>Start Call</span>
         </button>
       ) : (
-        <ControlBar onConnectButtonClicked={props.onConnectButtonClicked} />
+        <ControlBar />
       )}
     </div>
   );
 }
 
-function ControlBar(props: { onConnectButtonClicked: () => void }) {
+function ControlBar() {
   const { state: agentState } = useVoiceAssistant();
 
   return (
