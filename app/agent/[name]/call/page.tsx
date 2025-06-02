@@ -28,7 +28,7 @@ export default function Page() {
 
   const onConnectButtonClicked = useCallback(async () => {
     const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
+      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details?roomName=" + params.name,
       window.location.origin
     );
     const response = await fetch(url.toString());

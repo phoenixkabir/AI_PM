@@ -1,5 +1,5 @@
 import { AccessToken, AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 // NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
@@ -16,7 +16,7 @@ export type ConnectionDetails = {
   participantToken: string;
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     if (LIVEKIT_URL === undefined) {
       throw new Error("LIVEKIT_URL is not defined");
@@ -29,8 +29,10 @@ export async function GET() {
     }
 
     // Generate participant token
+    const roomNameData = request.nextUrl.searchParams.get("roomName");
+    const roomName = roomNameData || `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+    // const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
     const participantToken = await createParticipantToken(
       { identity: participantIdentity },
       roomName
