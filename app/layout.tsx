@@ -10,7 +10,7 @@ const publicSans400 = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Feedback AI",
+  title: "Pratikriya AI",
 };
 
 export default function RootLayout({

@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   BarChart3,
   ClipboardList,
+  Loader2,
   MessageSquare,
   MessagesSquare,
   Sparkles,
@@ -69,6 +70,7 @@ function useAutoResizeTextarea({ minHeight, maxHeight }: UseAutoResizeTextareaPr
 export function VercelV0Chat() {
   const router = useRouter();
   const [value, setValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
@@ -82,12 +84,20 @@ export function VercelV0Chat() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const prompt = formData.get("prompt") as string;
+    setIsLoading(true);
+    
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      const prompt = formData.get("prompt") as string;
 
-    const data = await generateProductConversation(prompt);
-    if (data) {
-      router.push(`/customize/${data.slug}`);
+      const data = await generateProductConversation(prompt);
+      if (data) {
+        router.push(`/customize/${data.slug}`);
+      }
+    } catch (error) {
+      console.error("Error generating conversation:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -125,17 +135,25 @@ export function VercelV0Chat() {
           </div>
 
           <div className="flex items-center justify-end p-3">
-            <Button size={value.trim() ? "sm" : "icon"} disabled={!value.trim()} className="gap-0">
-              <ArrowUpIcon
-                className={cn("w-4 h-4", value.trim() ? "text-black" : "text-zinc-400")}
-              />
+            <Button 
+              size={value.trim() ? "sm" : "icon"} 
+              disabled={!value.trim() || isLoading} 
+              className="gap-0"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <ArrowUpIcon
+                  className={cn("w-4 h-4", value.trim() ? "text-black" : "text-zinc-400")}
+                />
+              )}
               <span
                 className={cn(
                   value.trim() ? "w-full opacity-100 ml-2" : "w-0 opacity-0",
                   "transition-all duration-600"
                 )}
               >
-                Create Agent
+                {isLoading ? "Creating..." : "Create Agent"}
               </span>
             </Button>
           </div>
@@ -251,9 +269,14 @@ interface ActionButtonProps {
 }
 
 function ActionButton({ icon, label, prompt, onClick }: ActionButtonProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleClick = () => {
     if (onClick) {
+      setIsLoading(true);
       onClick(prompt);
+      // Reset loading after a short delay to show the loading state
+      setTimeout(() => setIsLoading(false), 500);
     }
   };
 
@@ -262,8 +285,9 @@ function ActionButton({ icon, label, prompt, onClick }: ActionButtonProps) {
       type="button"
       className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-full border border-neutral-800 text-neutral-400 hover:text-white transition-colors"
       onClick={handleClick}
+      disabled={isLoading}
     >
-      {icon}
+      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
       <span className="text-xs">{label}</span>
     </button>
   );
