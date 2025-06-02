@@ -28,7 +28,7 @@ export default function Page() {
 
   const onConnectButtonClicked = useCallback(async () => {
     const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details",
+      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details?roomName=" + params?.name,
       window.location.origin
     );
     const response = await fetch(url.toString());
@@ -37,7 +37,8 @@ export default function Page() {
     await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
     await room.localParticipant.setMicrophoneEnabled(true);
     setIsConnected(true);
-  }, [room]);
+    console.log("SENDING TO ROOM: ", params.name)
+  }, [room, params.name]);
 
   useEffect(() => {
     room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
