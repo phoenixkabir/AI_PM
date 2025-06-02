@@ -13,6 +13,8 @@ import {
 import { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 import { Button } from "./button";
+import { generateProductConversation } from "@/utils/product-conversation";
+import { useRouter } from "next/navigation";
 
 interface UseAutoResizeTextareaProps {
   minHeight: number;
@@ -65,21 +67,12 @@ function useAutoResizeTextarea({ minHeight, maxHeight }: UseAutoResizeTextareaPr
 }
 
 export function VercelV0Chat() {
+  const router = useRouter();
   const [value, setValue] = useState("");
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({
     minHeight: 60,
     maxHeight: 200,
   });
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (value.trim()) {
-        setValue("");
-        adjustHeight(true);
-      }
-    }
-  };
 
   const setPromptValue = (promptText: string) => {
     setValue(promptText);
@@ -87,21 +80,32 @@ export function VercelV0Chat() {
     setTimeout(() => adjustHeight(), 0);
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const prompt = formData.get("prompt") as string;
+
+    const data = await generateProductConversation(prompt);
+    if (data) {
+      router.push(`/agent/${data.slug}`);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 space-y-8">
       <h1 className="text-4xl font-bold text-black dark:text-white">Feedback AI</h1>
 
       <div className="w-full">
-        <div className="relative bg-neutral-900 rounded-xl border border-neutral-800">
+        <form onSubmit={handleSubmit} className="relative bg-neutral-900 rounded-xl border border-neutral-800">
           <div className="overflow-y-auto">
             <Textarea
               ref={textareaRef}
+              name="prompt"
               value={value}
               onChange={(e) => {
                 setValue(e.target.value);
                 adjustHeight();
               }}
-              onKeyDown={handleKeyDown}
               placeholder="Describe the type of help you need to collect feedback from your customers, your goals, and requirements..."
               className={cn(
                 "w-full px-4 py-3",
@@ -135,7 +139,7 @@ export function VercelV0Chat() {
               </span>
             </Button>
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
           <ActionButton

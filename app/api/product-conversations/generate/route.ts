@@ -22,10 +22,10 @@ Respond only in JSON format like this:
 }
 `;
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userPrompt = searchParams.get("userprompt");
+    const body = await req.json();
+    const { userPrompt } = body;
 
     const parsed = promptSchema.safeParse({ userPrompt });
     if (!parsed.success) {

@@ -20,7 +20,6 @@ export default function CustomizePage() {
   };
 
   const addQuestion = () => {
-    // Check if all existing questions have content
     const allFilled = primaryQuestions.every((question) => question.trim() !== "");
 
     if (allFilled) {
@@ -34,14 +33,11 @@ export default function CustomizePage() {
     setPrimaryQuestions(newQuestions);
   };
 
-  // Check if all questions have content for enabling/disabling add button
   const canAddQuestion = primaryQuestions.every((question) => question.trim() !== "");
 
   const handleSubmit = async () => {
-    // Filter out empty questions
     const filteredQuestions = primaryQuestions.filter((q) => q.trim() !== "");
 
-    // Create payload based on ProductConversations schema
     const payload = {
       uniqueName: agentName,
       systemPrompt: objective,
@@ -50,7 +46,6 @@ export default function CustomizePage() {
     };
 
     console.log("Submitting:", payload);
-    // Here you would add the API call to save this data
   };
 
   return (
