@@ -103,7 +103,7 @@ export function VercelV0Chat() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-4xl mx-auto p-4 space-y-8">
-      <h1 className="text-4xl font-bold text-black dark:text-white">Feedback AI</h1>
+      <h1 className="text-4xl font-bold text-black dark:text-white">Pratikriya AI</h1>
 
       <div className="w-full">
         <form onSubmit={handleSubmit} className="relative bg-neutral-900 rounded-xl border border-neutral-800">
