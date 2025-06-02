@@ -14,7 +14,7 @@ interface FeedbackItem {
   id: string;
   feedbackSummary: string | null;
   transcript: Array<{ role: string; content: string }>;
-  userData: Record<string, any> | null;
+  userData: Record<string, string> | null;
   status: "initiated" | "dropped" | "completed";
   createdAt: string;
 }
@@ -24,7 +24,7 @@ interface ProductConversation {
   uniqueName: string;
   systemPrompt: string;
   questions: string[];
-  metadata: Record<string, any> | null;
+  metadata: Record<string, string> | null;
   createdAt: string;
   updatedAt: string;
   feedbacks: FeedbackItem[];

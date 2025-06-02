@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -8,17 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Eye, MessageCircle, PhoneCall } from "lucide-react";
+import { CalendarIcon, Eye, PhoneCall } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { getProductConversations, ProductConversation } from "@/app/api/product-conversations/server-actions";
 
-
-interface ShowcaseAgentsProps {
-  conversations?: ProductConversation[];
-}
-
-export async function ShowcaseAgents({ conversations = [] }: ShowcaseAgentsProps) {
+export async function ShowcaseAgents() {
   const agents = await getProductConversations();
   return (
     <div className="container py-12 mx-auto">
