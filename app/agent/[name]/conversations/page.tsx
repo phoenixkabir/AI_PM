@@ -274,8 +274,8 @@ export default function AgentConversationsPage() {
                               {msg.role}:
                             </span>
                             <span className="text-gray-300 ml-2">
-                              {msg.content.substring(0, 100)}
-                              {msg.content.length > 100 && "..."}
+                              {msg.content?.substring(0, 100) || "No content"}
+                              {(msg.content?.length || 0) > 100 && "..."}
                             </span>
                           </div>
                         ))}
