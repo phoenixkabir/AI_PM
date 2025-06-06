@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useClipboard } from "@/hooks/useClipboard";
-import { Check, Clipboard, PhoneCall } from "lucide-react";
+import { Check, Clipboard, PhoneCall, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -32,7 +32,7 @@ interface ProductConversation {
 
 export default function AgentPage() {
   const {name} = useParams();
-  const [shareableUrl] = useState(`https://pratikriya.cream11.live/agent/${name}/call`);
+  const [shareableUrl] = useState(`${window.location.origin}/agent/${name}/call`);
   const { copyStatus, copy } = useClipboard();
   const [conversationData, setConversationData] = useState<ProductConversation | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,6 +161,12 @@ export default function AgentPage() {
             <Link href={`/agent/${name}/call`}>
               <PhoneCall className="mr-2" />
               Talk to Agent
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="bg-transparent border-gray-600 text-gray-300">
+            <Link href={`/agent/${name}/conversations`}>
+              <Users className="mr-2" />
+              View All Conversations
             </Link>
           </Button>
         </div>

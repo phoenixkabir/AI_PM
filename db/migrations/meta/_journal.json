@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1749216367773,
+      "tag": "0000_green_riptide",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1749217971328,
+      "tag": "0001_panoramic_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749237604789,
+      "tag": "0002_medical_giant_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749239881645,
+      "tag": "0003_majestic_richard_fisk",
+      "breakpoints": true
+    }
+  ]
+}

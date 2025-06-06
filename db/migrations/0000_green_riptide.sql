@@ -1,0 +1,1 @@
+ALTER TABLE "user_feedback" ADD COLUMN "room_finished_received" boolean DEFAULT false NOT NULL;--> statement-breakpoint

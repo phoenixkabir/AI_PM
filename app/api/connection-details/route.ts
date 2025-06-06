@@ -47,8 +47,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: `ProductConversation with uniqueName ${roomName} not found` }, { status: 404 });
     }
 
-    // Generate participant identity
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
+    // Generate unique participant identity with timestamp to ensure uniqueness for concurrent users
+    const timestamp = Date.now();
+    const randomSuffix = Math.floor(Math.random() * 10_000);
+    const participantIdentity = `voice_assistant_user_${timestamp}_${randomSuffix}`;
 
     // Create a new UserFeedback record, including participantIdentity in metadata
     const newUserFeedback = await db.insert(UserFeedback).values({

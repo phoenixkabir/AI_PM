@@ -23,7 +23,7 @@ export const GeneratedConversations = pgTable("generated_conversations", {
   expiresAt: timestamp("expires_at").notNull().default(dayjs().add(24, 'hour').toDate()),
 });
 
-export const feedbackStatusEnum = pgEnum("feedback_status", ["initiated", "dropped", "completed"]);
+export const feedbackStatusEnum = pgEnum("feedback_status", ["initiated", "processing", "dropped", "completed"]);
 
 export const UserFeedback = pgTable("user_feedback", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -47,4 +47,31 @@ export const UserFeedback = pgTable("user_feedback", {
   updatedAt: timestamp("updated_at")
     .$onUpdate(() => dayjs().toDate())
     .default(dayjs().toDate()),
+});
+
+// Table to store individual transcript entries for better tracking
+export const TranscriptEntries = pgTable("transcript_entries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  feedbackId: uuid("feedback_id")
+    .references(() => UserFeedback.id, { onDelete: "cascade" })
+    .notNull(),
+  role: varchar("role", { length: 50 }).notNull(), // "user", "assistant", "system"
+  content: text("content").notNull(),
+  messageId: varchar("message_id", { length: 255 }), // For tracking specific messages
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  metadata: jsonb("metadata"), // Additional message metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Table to store LLM analysis results
+export const FeedbackAnalysis = pgTable("feedback_analysis", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  feedbackId: uuid("feedback_id")
+    .references(() => UserFeedback.id, { onDelete: "cascade" })
+    .notNull(),
+  analysis: jsonb("analysis").notNull(), // LLM analysis results
+  analysisType: varchar("analysis_type", { length: 100 }).notNull().default("general"), // "sentiment", "summary", "insights", etc.
+  llmModel: varchar("llm_model", { length: 100 }), // Track which model was used
+  processingTime: timestamp("processing_time").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
