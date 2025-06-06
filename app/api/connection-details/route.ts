@@ -1,5 +1,8 @@
 import { AccessToken, AccessTokenOptions, VideoGrant } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db"; // Assuming db instance is exported from '@/db'
+import { ProductConversations, UserFeedback } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 // NOTE: you are expected to define the following environment variables in `.env.local`:
 const API_KEY = process.env.LIVEKIT_API_KEY;
@@ -14,6 +17,7 @@ export type ConnectionDetails = {
   roomName: string;
   participantName: string;
   participantToken: string;
+  userFeedbackId: string;
 };
 
 export async function GET(request: NextRequest) {
@@ -28,22 +32,51 @@ export async function GET(request: NextRequest) {
       throw new Error("LIVEKIT_API_SECRET is not defined");
     }
 
-    // Generate participant token
     const roomNameData = request.nextUrl.searchParams.get("roomName");
-    const roomName = roomNameData || `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+    if (!roomNameData) {
+        return NextResponse.json({ error: "roomName is required" }, { status: 400 });
+    }
+    const roomName = roomNameData;
+
+    // Find the ProductConversation based on the roomName (uniqueName)
+    const conversation = await db.query.ProductConversations.findFirst({
+        where: eq(ProductConversations.uniqueName, roomName as any),
+    });
+
+    if (!conversation) {
+        return NextResponse.json({ error: `ProductConversation with uniqueName ${roomName} not found` }, { status: 404 });
+    }
+
+    // Generate participant identity
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    // const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+
+    // Create a new UserFeedback record, including participantIdentity in metadata
+    const newUserFeedback = await db.insert(UserFeedback).values({
+        conversationId: conversation.id,
+        status: 'initiated',
+        metadata: { participantIdentity: participantIdentity }, // Store participantIdentity
+        // transcript and userData can be left as default or empty initially
+    }).returning({ id: UserFeedback.id });
+
+    if (!newUserFeedback || newUserFeedback.length === 0) {
+        throw new Error("Failed to create new UserFeedback record");
+    }
+
+    const userFeedbackId = newUserFeedback[0].id;
+
+    // Generate participant token
     const participantToken = await createParticipantToken(
-      { identity: participantIdentity },
-      roomName
+      { identity: participantIdentity }, // Use the generated identity
+      conversation.uniqueName // Use the uniqueName from the found conversation
     );
 
-    // Return connection details
+    // Return connection details including the new userFeedbackId and participantName
     const data: ConnectionDetails = {
       serverUrl: LIVEKIT_URL,
-      roomName,
+      roomName: conversation.uniqueName,
       participantToken: participantToken,
-      participantName: participantIdentity,
+      participantName: participantIdentity, // Return the generated identity
+      userFeedbackId: userFeedbackId,
     };
     const headers = new Headers({
       "Cache-Control": "no-store",
@@ -51,9 +84,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, { headers });
   } catch (error) {
     if (error instanceof Error) {
-      console.error(error);
+      console.error('Error in connection-details API:', error);
       return new NextResponse(error.message, { status: 500 });
     }
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }
 

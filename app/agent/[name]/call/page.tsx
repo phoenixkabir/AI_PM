@@ -19,16 +19,22 @@ import { useCallback, useEffect, useState } from "react";
 import type { ConnectionDetails } from "./api/connection-details/route";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
+import useCombinedTranscriptions from "@/hooks/useCombinedTranscriptions";
 
-export default function Page() {
-  const params = useParams();
-  const agentName = (params.name as string).replaceAll("-", " ");
-  const [room] = useState(new Room());
+// Extract LiveKit-dependent logic into a separate component
+interface CallContentProps {
+  room: Room;
+  userFeedbackId: string | null;
+  agentName: string;
+}
+
+function CallContent({ room, userFeedbackId, agentName }: CallContentProps) {
   const [isConnected, setIsConnected] = useState(false);
+  const combinedTranscriptions = useCombinedTranscriptions();
 
   const onConnectButtonClicked = useCallback(async () => {
     const url = new URL(
-      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details?roomName=" + params.name,
+      process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details?roomName=" + agentName.toLowerCase().replace(/ /g, '-'),
       window.location.origin
     );
     const response = await fetch(url.toString());
@@ -37,7 +43,7 @@ export default function Page() {
     await room.connect(connectionDetailsData.serverUrl, connectionDetailsData.participantToken);
     await room.localParticipant.setMicrophoneEnabled(true);
     setIsConnected(true);
-  }, [room]);
+  }, [room, agentName]);
 
   useEffect(() => {
     room.on(RoomEvent.MediaDevicesError, onDeviceFailure);
@@ -55,38 +61,93 @@ export default function Page() {
     });
   }, [room]);
 
+  useEffect(() => {
+    if (userFeedbackId && combinedTranscriptions.length > 0) {
+      const sendTranscript = async () => {
+        try {
+          const response = await fetch(`/api/feedback/${userFeedbackId}/transcript`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(combinedTranscriptions),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to send transcript update:', response.statusText);
+          } else {
+            console.log('Transcript update sent successfully');
+          }
+        } catch (error) {
+          console.error('Error sending transcript update:', error);
+        }
+      };
+
+      sendTranscript();
+    }
+  }, [combinedTranscriptions, userFeedbackId]);
+
   return (
     <main data-lk-theme="default" className="h-full w-screen flex justify-center items-center bg-[var(--lk-bg)]">
-      <RoomContext.Provider value={room}>
-        {isConnected ? (
-          <div className="flex w-full h-screen">
-            {/* Left sidebar with visualizer */}
-            <div className="flex flex-col items-center justify-center p-6">
-              <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
-              <div className="w-[300px] h-[150px]">
-                <AgentVisualizer />
-              </div>
-              <StartOrEndCallButton onConnectButtonClicked={onConnectButtonClicked} />
+      {isConnected ? (
+        <div className="flex w-full h-screen">
+          <div className="flex flex-col items-center justify-center p-6">
+            <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
+            <div className="w-[300px] h-[150px]">
+              <AgentVisualizer />
             </div>
+            <StartOrEndCallButton onConnectButtonClicked={onConnectButtonClicked} />
+          </div>
 
-            {/* Main content area */}
-            <div className={cn(isConnected && "flex-1 p-6")}>
-              <SimpleVoiceAssistant />
-            </div>
+          <div className={cn(isConnected && "flex-1 p-6")}>
+            <SimpleVoiceAssistant />
           </div>
-        ) : (
-          <div className="flex w-full h-screen items-center justify-center">
-            <div className="flex flex-col items-center justify-center p-6">
-              <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
-              <div className="w-[300px] h-[150px]">
-                <AgentVisualizer />
-              </div>
-              <StartOrEndCallButton onConnectButtonClicked={onConnectButtonClicked} />
+        </div>
+      ) : (
+        <div className="flex w-full h-screen items-center justify-center">
+          <div className="flex flex-col items-center justify-center p-6">
+            <h1 className="text-2xl font-bold mb-4 capitalize">{agentName}</h1>
+            <div className="w-[300px] h-[150px]">
+              <AgentVisualizer />
             </div>
+            <StartOrEndCallButton onConnectButtonClicked={onConnectButtonClicked} />
           </div>
-        )}
-      </RoomContext.Provider>
+        </div>
+      )}
     </main>
+  );
+}
+
+export default function Page() {
+  const params = useParams();
+  const agentName = (params.name as string).replaceAll("-", " ");
+  const [room] = useState(new Room());
+  const [userFeedbackId, setUserFeedbackId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserFeedbackId = async () => {
+      const url = new URL(
+        process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? "/api/connection-details?roomName=" + agentName.toLowerCase().replace(/ /g, '-'),
+        window.location.origin
+      );
+      try {
+        const response = await fetch(url.toString());
+        const connectionDetailsData: ConnectionDetails = await response.json();
+        setUserFeedbackId(connectionDetailsData.userFeedbackId);
+      } catch (error) {
+        console.error("Failed to fetch connection details or create user feedback:", error);
+      }
+    };
+
+    if (agentName) {
+      fetchUserFeedbackId();
+    }
+  }, [agentName]);
+
+  return (
+    <RoomContext.Provider value={room}>
+      <CallContent room={room} userFeedbackId={userFeedbackId} agentName={agentName} />
+    </RoomContext.Provider>
   );
 }
 
