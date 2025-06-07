@@ -33,7 +33,17 @@ async def entrypoint(ctx: agents.JobContext):
     await ctx.connect()
     
     session = AgentSession()
-    data = requests.get(f"https://pratikriya.cream11.live/api/product-conversations/{ctx.room.name}")
+    
+    # Extract the original agent name from the unique room name
+    # Room name format: "{agentName}_session_{timestamp}_{randomSuffix}"
+    room_name = ctx.room.name
+    if "_session_" in room_name:
+        agent_name = room_name.split("_session_")[0]
+    else:
+        # Fallback for backwards compatibility
+        agent_name = room_name
+    
+    data = requests.get(f"https://pratikriya.cream11.live/api/product-conversations/{agent_name}")
     instructions = data.json()["data"]["systemPrompt"]
     await session.start(
         room=ctx.room,

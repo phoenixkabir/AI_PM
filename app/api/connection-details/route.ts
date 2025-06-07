@@ -52,11 +52,17 @@ export async function GET(request: NextRequest) {
     const randomSuffix = Math.floor(Math.random() * 10_000);
     const participantIdentity = `voice_assistant_user_${timestamp}_${randomSuffix}`;
 
-    // Create a new UserFeedback record, including participantIdentity in metadata
+    // Generate unique room name for each user session to prevent voice mixing
+    const uniqueRoomName = `${conversation.uniqueName}_session_${timestamp}_${randomSuffix}`;
+
+    // Create a new UserFeedback record, including participantIdentity and unique room name in metadata
     const newUserFeedback = await db.insert(UserFeedback).values({
         conversationId: conversation.id,
         status: 'initiated',
-        metadata: { participantIdentity: participantIdentity }, // Store participantIdentity
+        metadata: { 
+            participantIdentity: participantIdentity,
+            uniqueRoomName: uniqueRoomName 
+        }, // Store both identifiers
         // transcript and userData can be left as default or empty initially
     }).returning({ id: UserFeedback.id });
 
@@ -66,16 +72,16 @@ export async function GET(request: NextRequest) {
 
     const userFeedbackId = newUserFeedback[0].id;
 
-    // Generate participant token
+    // Generate participant token using the unique room name
     const participantToken = await createParticipantToken(
       { identity: participantIdentity }, // Use the generated identity
-      conversation.uniqueName // Use the uniqueName from the found conversation
+      uniqueRoomName // Use the unique room name for this session
     );
 
     // Return connection details including the new userFeedbackId and participantName
     const data: ConnectionDetails = {
       serverUrl: LIVEKIT_URL,
-      roomName: conversation.uniqueName,
+      roomName: uniqueRoomName, // Return the unique room name
       participantToken: participantToken,
       participantName: participantIdentity, // Return the generated identity
       userFeedbackId: userFeedbackId,

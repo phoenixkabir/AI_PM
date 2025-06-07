@@ -32,8 +32,13 @@ interface ProductConversation {
 
 export default function AgentPage() {
   const {name} = useParams();
-  const [shareableUrl] = useState(`${window.location.origin}/agent/${name}/call`);
+  const [shareableUrl, setShareableUrl] = useState('');
   const { copyStatus, copy } = useClipboard();
+
+  // Set shareable URL after component mounts to avoid SSR issues
+  useEffect(() => {
+    setShareableUrl(`${window.location.origin}/agent/${name}/call`);
+  }, [name]);
   const [conversationData, setConversationData] = useState<ProductConversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { db } from "@/db"; // Assuming db instance is exported from '@/db'
-import { UserFeedback, TranscriptEntries, FeedbackAnalysis } from "@/db/schema";
+import { UserFeedback, TranscriptEntries, FeedbackAnalysis, ProductConversations } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 const apiKey = process.env.LIVEKIT_API_KEY;
@@ -206,27 +206,66 @@ export async function POST(request: NextRequest) {
                   if (entryFeedback && entryFeedback.status !== 'completed' && (!entryFeedback.metadata || !(entryFeedback.metadata as any)?.roomSid)) {
                     console.log(`Found transcript entry from feedback ${entry.feedbackId} without roomSid, checking if it should be associated with ${roomSid}`);
                     
-                    // Get all entries for this feedbackId to see if it's a substantial conversation
-                    const allEntriesForFeedback = await db.query.TranscriptEntries.findMany({
-                      where: eq(TranscriptEntries.feedbackId, entry.feedbackId)
-                    });
+                    // Check if this feedback belongs to the same agent by comparing room names
+                    const roomName = event.room?.name;
+                    let shouldAssociate = false;
                     
-                    if (allEntriesForFeedback.length >= 2) { // At least 2 messages indicate a real conversation
-                      console.log(`Associating transcript data from feedback ${entry.feedbackId} with roomSid ${roomSid} and processing...`);
+                    if (roomName && roomName.includes('_session_')) {
+                      // Extract agent name from room name: "agent-name_session_timestamp_random"
+                      const agentName = roomName.split('_session_')[0];
                       
-                      // Mark the orphaned feedback as processing
-                      await db.update(UserFeedback)
-                        .set({ 
-                          status: 'processing',
-                          metadata: sql`COALESCE(${UserFeedback.metadata}, '{}') || ${JSON.stringify({ roomSid: roomSid })}`
-                        })
-                        .where(eq(UserFeedback.id, entry.feedbackId));
+                      // Check if this feedback belongs to the same agent
+                      const feedbackWithConversation = await db.query.UserFeedback.findFirst({
+                        where: eq(UserFeedback.id, entry.feedbackId),
+                        columns: { conversationId: true }
+                      });
                       
-                      // Process this conversation
-                      await processTranscriptWithLLM(entry.feedbackId, allEntriesForFeedback, []);
+                      if (feedbackWithConversation) {
+                        const conversation = await db.query.ProductConversations.findFirst({
+                          where: eq(ProductConversations.id, feedbackWithConversation.conversationId),
+                          columns: { uniqueName: true }
+                        });
+                        
+                        if (conversation?.uniqueName === agentName) {
+                          shouldAssociate = true;
+                          console.log(`Feedback ${entry.feedbackId} belongs to agent ${agentName}, will associate with roomSid ${roomSid}`);
+                        } else {
+                          console.log(`Feedback ${entry.feedbackId} belongs to different agent (${conversation?.uniqueName}), skipping association`);
+                        }
+                      }
+                    } else {
+                      // Fallback for old room naming convention
+                      shouldAssociate = true;
+                    }
+                    
+                    if (shouldAssociate) {
+                      // Get all entries for this feedbackId to see if it's a substantial conversation
+                      const allEntriesForFeedback = await db.query.TranscriptEntries.findMany({
+                        where: eq(TranscriptEntries.feedbackId, entry.feedbackId)
+                      });
                       
-                      console.log(`Successfully processed unassociated transcript data for roomSid ${roomSid}`);
-                      return NextResponse.json({ success: true }, { status: 200 });
+                      if (allEntriesForFeedback.length >= 2) { // At least 2 messages indicate a real conversation
+                        console.log(`Associating transcript data from feedback ${entry.feedbackId} with roomSid ${roomSid} and processing...`);
+                        
+                        // Atomically claim the feedback for processing to prevent race conditions
+                        const claimResult = await db.update(UserFeedback)
+                          .set({ 
+                            status: 'processing',
+                            metadata: sql`COALESCE(${UserFeedback.metadata}, '{}') || ${JSON.stringify({ roomSid: roomSid })}`
+                          })
+                          .where(sql`${UserFeedback.id} = ${entry.feedbackId} AND ${UserFeedback.status} != 'processing' AND ${UserFeedback.status} != 'completed'`)
+                          .returning({ id: UserFeedback.id });
+                        
+                        if (claimResult.length > 0) {
+                          // Process this conversation
+                          await processTranscriptWithLLM(entry.feedbackId, allEntriesForFeedback, []);
+                          
+                          console.log(`Successfully processed unassociated transcript data for roomSid ${roomSid}`);
+                          return NextResponse.json({ success: true }, { status: 200 });
+                        } else {
+                          console.log(`Failed to claim feedback ${entry.feedbackId} - already being processed by another webhook`);
+                        }
+                      }
                     }
                   }
                 }

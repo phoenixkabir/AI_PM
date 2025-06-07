@@ -62,28 +62,72 @@ function CallContent({ room, userFeedbackId, agentName }: CallContentProps) {
   }, [room]);
 
   useEffect(() => {
+    console.log('📊 Transcript effect triggered - userFeedbackId:', userFeedbackId, 'transcriptions count:', combinedTranscriptions.length);
+    
     if (userFeedbackId && combinedTranscriptions.length > 0) {
+      // Validate transcript data structure
+      const validTranscriptions = combinedTranscriptions.filter(t => {
+        const isValid = t && t.text && t.role;
+        if (!isValid) {
+          console.warn('⚠️ Invalid transcript entry found:', t);
+        }
+        return isValid;
+      });
+
+      if (validTranscriptions.length === 0) {
+        console.warn('⚠️ No valid transcript entries found to send');
+        return;
+      }
+
       const sendTranscript = async () => {
         try {
+          console.log('🔄 Sending transcript update for userFeedbackId:', userFeedbackId);
+          console.log('📝 Valid transcript data being sent:', validTranscriptions);
+          console.log('📊 Number of valid transcript segments:', validTranscriptions.length);
+          
+          // Sample the data structure for debugging
+          const sampleEntry = validTranscriptions[0];
+          console.log('🔍 Sample transcript entry structure:', {
+            id: sampleEntry.id,
+            text: sampleEntry.text?.substring(0, 30) + '...',
+            role: sampleEntry.role,
+            firstReceivedTime: sampleEntry.firstReceivedTime,
+            final: sampleEntry.final,
+            allKeys: Object.keys(sampleEntry)
+          });
+          
           const response = await fetch(`/api/feedback/${userFeedbackId}/transcript`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(combinedTranscriptions),
+            body: JSON.stringify(validTranscriptions),
           });
 
           if (!response.ok) {
-            console.error('Failed to send transcript update:', response.statusText);
+            console.error('❌ Failed to send transcript update:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
           } else {
-            console.log('Transcript update sent successfully');
+            console.log('✅ Transcript update sent successfully');
+            const result = await response.json();
+            console.log('📤 Server response:', result);
           }
         } catch (error) {
-          console.error('Error sending transcript update:', error);
+          console.error('❌ Error sending transcript update:', error);
         }
       };
 
-      sendTranscript();
+      // Add a small debounce to avoid too many API calls
+      const timeoutId = setTimeout(sendTranscript, 1000);
+      return () => clearTimeout(timeoutId);
+    } else {
+      if (!userFeedbackId) {
+        console.log('⏳ Waiting for userFeedbackId...');
+      }
+      if (combinedTranscriptions.length === 0) {
+        console.log('📭 No transcriptions yet...');
+      }
     }
   }, [combinedTranscriptions, userFeedbackId]);
 
