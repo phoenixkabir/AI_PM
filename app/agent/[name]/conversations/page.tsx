@@ -1,11 +1,9 @@
+// Backup of the original file
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, MessageCircle, Clock, TrendingUp, Eye } from "lucide-react";
 import Link from "next/link";
 
 interface ConversationData {
@@ -50,7 +48,7 @@ export default function AgentConversationsPage() {
         if (!response.ok) {
           throw new Error(`Failed to fetch conversations: ${response.status}`);
         }
-        
+
         const result = await response.json();
         setData(result.data);
       } catch (err) {
@@ -66,10 +64,10 @@ export default function AgentConversationsPage() {
     }
   }, [name]);
 
-  const getStatusBadgeClass = (status: "initiated" | "dropped" | "completed") => {
-    if (status === "initiated") return "bg-blue-900 text-blue-300";
-    if (status === "dropped") return "bg-yellow-900 text-yellow-300";
-    return "bg-green-900 text-green-300";
+  const getStatusColor = (status: "initiated" | "dropped" | "completed") => {
+    if (status === "completed") return "text-white";
+    if (status === "initiated") return "text-gray-500";
+    return "text-gray-800";
   };
 
   const filteredConversations = data?.conversations.filter(conv => 
@@ -89,8 +87,8 @@ export default function AgentConversationsPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading conversations...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-400 font-light">Loading conversations...</p>
         </div>
       </div>
     );
@@ -100,11 +98,14 @@ export default function AgentConversationsPage() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-400 text-xl mb-4">Error: {error}</p>
-          <Button asChild variant="outline">
+          <div className="rounded-full h-8 w-8 bg-red-500 mx-auto mb-4"></div>
+          <p className="text-red-400 text-xl mb-4 font-light">Error: {error}</p>
+          <Button 
+            asChild 
+            className="bg-white text-black hover:bg-gray-200 font-light"
+          >
             <Link href={`/agent/${name}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Agent
+              ← Back to Agent
             </Link>
           </Button>
         </div>
@@ -115,80 +116,61 @@ export default function AgentConversationsPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="border-b border-gray-800 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link href={`/agent/${name}`}>
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold capitalize">
-                {data?.agentName.replaceAll("-", " ")} - All Conversations
-              </h1>
-              <p className="text-gray-400 mt-1">
-                Monitor and analyze all user interactions with this agent
-              </p>
-            </div>
+      <div className="border-b border-gray-800 p-8">
+        <div className="flex items-center space-x-4">
+          <Button 
+            asChild 
+            className="bg-transparent hover:bg-gray-900 text-white border-0 p-2"
+          >
+            <Link href={`/agent/${name}`}>
+              ←
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-5xl font-light capitalize tracking-wider">
+              {data?.agentName.replaceAll("-", " ")}
+            </h1>
+            <p className="text-gray-400 mt-2 font-light text-lg">
+              ALL CONVERSATIONS
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-gray-900 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">
-                Total Conversations
-              </CardTitle>
-              <Users className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{data?.totalConversations || 0}</div>
-            </CardContent>
-          </Card>
+      <div className="p-8 space-y-12">
+        {/* Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="bg-gray-900/50 border border-gray-800 p-6">
+            <div className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-light">
+              TOTAL CONVERSATIONS
+            </div>
+            <div className="text-3xl font-light text-white">{data?.totalConversations || 0}</div>
+          </div>
 
-          <Card className="bg-gray-900 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">
-                Completed
-              </CardTitle>
-              <MessageCircle className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-400">{statusCounts.completed || 0}</div>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-900/50 border border-gray-800 p-6">
+            <div className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-light">
+              COMPLETED
+            </div>
+            <div className="text-3xl font-light text-white">{statusCounts.completed || 0}</div>
+          </div>
 
-          <Card className="bg-gray-900 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">
-                In Progress
-              </CardTitle>
-              <Clock className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-400">{statusCounts.initiated || 0}</div>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-900/50 border border-gray-800 p-6">
+            <div className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-light">
+              IN PROGRESS
+            </div>
+            <div className="text-3xl font-light text-gray-500">{statusCounts.initiated || 0}</div>
+          </div>
 
-          <Card className="bg-gray-900 border-gray-700">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">
-                Completion Rate
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-400">{completionRate}%</div>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-900/50 border border-gray-800 p-6">
+            <div className="text-xs uppercase tracking-wider text-gray-500 mb-2 font-light">
+              COMPLETION RATE
+            </div>
+            <div className="text-3xl font-light text-white">{completionRate}%</div>
+          </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex space-x-2 mb-6">
+        {/* Filter Buttons */}
+        <div className="flex space-x-4">
           {[
             { key: "all", label: "All", count: data?.totalConversations || 0 },
             { key: "completed", label: "Completed", count: statusCounts.completed || 0 },
@@ -197,98 +179,103 @@ export default function AgentConversationsPage() {
           ].map(({ key, label, count }) => (
             <Button
               key={key}
-              variant={filter === key ? "default" : "outline"}
-              size="sm"
               onClick={() => setFilter(key as any)}
-              className={filter === key ? "bg-white text-black" : "bg-transparent border-gray-600 text-gray-300"}
+              className={`font-light tracking-wider ${
+                filter === key 
+                  ? "bg-white text-black hover:bg-gray-200" 
+                  : "bg-transparent border border-gray-700 text-gray-300 hover:bg-gray-900"
+              }`}
             >
-              {label} ({count})
+              {label.toUpperCase()} ({count})
             </Button>
           ))}
         </div>
 
         {/* Conversations List */}
         {filteredConversations.length === 0 ? (
-          <Card className="bg-gray-900 border-gray-700">
-            <CardContent className="py-12 text-center">
-              <MessageCircle className="h-12 w-12 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">
-                {filter === "all" 
-                  ? "No conversations yet. Share the agent link to start receiving feedback!"
-                  : `No ${filter} conversations found.`
-                }
-              </p>
-            </CardContent>
-          </Card>
+          <div className="bg-gray-900/50 border border-gray-800 p-12 text-center">
+            <div className="rounded-full h-16 w-16 bg-gray-800 mx-auto mb-6"></div>
+            <p className="text-gray-400 text-lg font-light">
+              {filter === "all" 
+                ? "No conversations yet. Share the agent link to start receiving feedback!"
+                : `No ${filter} conversations found.`
+              }
+            </p>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredConversations.map((conversation) => (
-              <Card key={conversation.id} className="bg-gray-900 border-gray-700 hover:border-gray-600 transition-colors">
-                <CardHeader>
+              <div 
+                key={conversation.id} 
+                className="bg-gray-900/50 border border-gray-800 hover:border-gray-700 transition-all duration-200"
+              >
+                {/* Conversation Header */}
+                <div className="p-6 border-b border-gray-800">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Badge className={getStatusBadgeClass(conversation.status)}>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-4">
+                        <span className={`text-sm uppercase tracking-wider font-light ${getStatusColor(conversation.status)}`}>
                           {conversation.status}
-                        </Badge>
-                        <span className="text-sm text-gray-400">
+                        </span>
+                        <span className="text-sm text-gray-500 font-light">
                           {new Date(conversation.createdAt).toLocaleString()}
                         </span>
                         {conversation.metadata?.participantIdentity && (
-                          <span className="text-xs text-gray-500 font-mono">
+                          <span className="text-xs text-gray-600 font-mono">
                             {conversation.metadata.participantIdentity}
                           </span>
                         )}
                       </div>
                       
                       {conversation.feedbackSummary && (
-                        <CardDescription className="text-gray-300">
+                        <p className="text-gray-300 font-light max-w-2xl">
                           {conversation.feedbackSummary}
-                        </CardDescription>
+                        </p>
                       )}
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      {conversation.analysis && (
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/analysis/${conversation.id}`}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View Analysis
-                          </Link>
-                        </Button>
+                    {conversation.analysis && (
+                      <Button 
+                        asChild 
+                        className="bg-white text-black hover:bg-gray-200 font-light tracking-wider"
+                      >
+                        <Link href={`/analysis/${conversation.id}`}>
+                          VIEW ANALYSIS
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Transcript Section */}
+                {conversation.transcript && conversation.transcript.length > 0 && (
+                  <div className="p-6">
+                    <div className="text-xs uppercase tracking-wider text-gray-500 mb-4 font-light">
+                      TRANSCRIPT ({conversation.transcript.length} messages)
+                    </div>
+                    <div className="bg-black border border-gray-800 p-4 max-h-40 overflow-y-auto">
+                      {conversation.transcript.slice(0, 3).map((msg, idx) => (
+                        <div key={idx} className="mb-3 last:mb-0">
+                          <span className={`text-xs uppercase tracking-wider font-light ${
+                            msg.role === 'user' ? 'text-gray-500' : 'text-white'
+                          }`}>
+                            {msg.role}:
+                          </span>
+                          <div className="text-sm text-gray-300 mt-1 font-light">
+                            {msg.content?.substring(0, 150) || "No content"}
+                            {(msg.content?.length || 0) > 150 && "..."}
+                          </div>
+                        </div>
+                      ))}
+                      {conversation.transcript.length > 3 && (
+                        <div className="text-xs text-gray-600 italic font-light mt-2">
+                          ...and {conversation.transcript.length - 3} more messages
+                        </div>
                       )}
                     </div>
                   </div>
-                </CardHeader>
-                
-                {conversation.transcript && conversation.transcript.length > 0 && (
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-400 font-medium">
-                        Transcript ({conversation.transcript.length} messages):
-                      </p>
-                      <div className="bg-gray-800 rounded p-3 max-h-32 overflow-y-auto">
-                        {conversation.transcript.slice(0, 3).map((msg, idx) => (
-                          <div key={idx} className="text-xs mb-1">
-                            <span className={`font-medium ${msg.role === 'user' ? 'text-blue-300' : 'text-green-300'}`}>
-                              {msg.role}:
-                            </span>
-                            <span className="text-gray-300 ml-2">
-                              {msg.content?.substring(0, 100) || "No content"}
-                              {(msg.content?.length || 0) > 100 && "..."}
-                            </span>
-                          </div>
-                        ))}
-                        {conversation.transcript.length > 3 && (
-                          <div className="text-xs text-gray-500 italic">
-                            ...and {conversation.transcript.length - 3} more messages
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         )}

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Brain, Clock, TrendingUp, MessageSquare, Target, AlertCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 interface AnalysisData {
   feedback: any;
@@ -62,42 +62,45 @@ export default function AnalysisPage() {
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment?.toLowerCase()) {
-      case 'positive': return 'bg-green-100 text-green-800 border-green-200';
-      case 'negative': return 'bg-red-100 text-red-800 border-red-200';
-      case 'neutral': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'positive': return 'bg-white text-black';
+      case 'negative': return 'bg-gray-800 text-white border border-gray-700';
+      case 'neutral': return 'bg-gray-500 text-white';
+      default: return 'bg-gray-600 text-white';
     }
   };
 
   const getSatisfactionColor = (satisfaction: string) => {
     switch (satisfaction?.toLowerCase()) {
-      case 'high': return 'bg-green-100 text-green-800 border-green-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'high': return 'bg-white text-black';
+      case 'medium': return 'bg-gray-500 text-white';
+      case 'low': return 'bg-gray-800 text-white border border-gray-700';
+      default: return 'bg-gray-600 text-white';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'initiated': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'dropped': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'completed': return 'bg-white text-black';
+      case 'processing': return 'bg-gray-500 text-white';
+      case 'initiated': return 'bg-gray-600 text-white';
+      case 'dropped': return 'bg-gray-800 text-white border border-gray-700';
+      default: return 'bg-gray-600 text-white';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center min-h-96">
-            <div className="text-center">
-              <Brain className="h-12 w-12 animate-pulse text-blue-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">Processing Analysis...</h2>
-              <p className="text-gray-500">Loading conversation insights</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-8 p-8">
+          <div className="relative">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-white/10 to-gray-600/10 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-white rounded-full animate-pulse"></div>
             </div>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-3xl font-light text-white">Analyzing</h2>
+            <p className="text-gray-400 max-w-md text-sm">Processing conversation data</p>
+            <div className="w-48 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mx-auto"></div>
           </div>
         </div>
       </div>
@@ -106,17 +109,22 @@ export default function AnalysisPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center min-h-96">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">Error Loading Analysis</h2>
-              <p className="text-gray-500 mb-4">{error}</p>
-              <Button onClick={fetchAnalysisData} variant="outline">
-                Try Again
-              </Button>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-8 p-8">
+          <div className="relative">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-red-500/10 to-red-600/10 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-red-500 rounded-full"></div>
             </div>
+          </div>
+          <div className="space-y-4">
+            <h2 className="text-3xl font-light text-white">Error</h2>
+            <p className="text-gray-400 max-w-md text-sm">{error}</p>
+            <Button 
+              onClick={fetchAnalysisData} 
+              className="mt-6 bg-white text-black hover:bg-gray-200 px-6 py-2"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </div>
@@ -128,217 +136,194 @@ export default function AnalysisPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-6">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-12">
           <Button 
             variant="ghost" 
             onClick={() => router.back()}
-            className="mb-4 hover:bg-white/50"
+            className="mb-8 text-gray-400 hover:text-white hover:bg-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Conversation Analysis
-                </h1>
-                <p className="text-gray-600">
-                  AI-powered insights from your conversation
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <Badge className={getStatusColor(data.feedback.status)}>
-                  {data.feedback.status?.toUpperCase()}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  {new Date(data.feedback.createdAt).toLocaleString()}
-                </span>
-              </div>
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-5xl font-light text-white mb-4">
+                Analysis
+              </h1>
+              <p className="text-gray-400 text-lg font-light">
+                Conversation insights and details
+              </p>
             </div>
+            <div className="flex items-center justify-between">
+              <Badge className={`${getStatusColor(data.feedback.status)} px-4 py-2 text-sm`}>
+                {data.feedback.status?.toUpperCase()}
+              </Badge>
+              <span className="text-sm text-gray-500">
+                {new Date(data.feedback.createdAt).toLocaleString()}
+              </span>
+            </div>
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </div>
         </div>
 
         {/* Analysis Results */}
         {data.analysis ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Summary Card */}
-            <div className="lg:col-span-2">
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-blue-500" />
-                    Conversation Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">
-                    {data.analysis.summary}
-                  </p>
-                </CardContent>
-              </Card>
+          <div className="space-y-12">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center space-y-2">
+                <p className="text-gray-400 text-sm uppercase tracking-wider">Sentiment</p>
+                <Badge className={`${getSentimentColor(data.analysis.sentiment)} text-sm px-3 py-1`}>
+                  {data.analysis.sentiment?.toUpperCase()}
+                </Badge>
+              </div>
+
+              <div className="text-center space-y-2">
+                <p className="text-gray-400 text-sm uppercase tracking-wider">Satisfaction</p>
+                <Badge className={`${getSatisfactionColor(data.analysis.satisfaction)} text-sm px-3 py-1`}>
+                  {data.analysis.satisfaction?.toUpperCase()}
+                </Badge>
+              </div>
+
+              <div className="text-center space-y-2">
+                <p className="text-gray-400 text-sm uppercase tracking-wider">Topics</p>
+                <p className="text-white text-2xl font-light">{data.analysis.topics?.length || 0}</p>
+              </div>
+
+              <div className="text-center space-y-2">
+                <p className="text-gray-400 text-sm uppercase tracking-wider">Insights</p>
+                <p className="text-white text-2xl font-light">{data.analysis.insights?.length || 0}</p>
+              </div>
             </div>
 
-            {/* Quick Metrics */}
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Sentiment Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge className={getSentimentColor(data.analysis.sentiment)}>
-                    {data.analysis.sentiment?.toUpperCase()}
-                  </Badge>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Satisfaction Level
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Badge className={getSatisfactionColor(data.analysis.satisfaction)}>
-                    {data.analysis.satisfaction?.toUpperCase()}
-                  </Badge>
-                </CardContent>
-              </Card>
-
-              {data.analysisMetadata && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Processing Info
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="text-sm">
-                      <span className="text-gray-500">Model:</span> {data.analysisMetadata.llmModel}
-                    </div>
-                    <div className="text-sm">
-                      <span className="text-gray-500">Processed:</span> {new Date(data.analysisMetadata.createdAt).toLocaleString()}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            {/* Summary */}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-light text-white">Summary</h2>
+              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-8">
+                <p className="text-gray-200 leading-relaxed text-lg font-light">
+                  {data.analysis.summary}
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-gray-400" />
-                Analysis Pending
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                {data.feedback.status === 'processing' 
-                  ? 'AI analysis is currently in progress...' 
-                  : 'No analysis available for this conversation yet.'}
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Topics and Insights */}
-        {data.analysis && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  Key Topics
-                </CardTitle>
-                <CardDescription>
-                  Main themes discussed in the conversation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
+            {/* Topics and Insights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* Topics */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-light text-white">Topics</h3>
+                <div className="flex flex-wrap gap-3">
                   {data.analysis.topics?.map((topic, index) => (
-                    <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge 
+                      key={index} 
+                      className="bg-gray-800 text-gray-200 border border-gray-700 px-3 py-1.5 text-sm hover:bg-gray-700 transition-colors"
+                    >
                       {topic}
                     </Badge>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Insights */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-500" />
-                  Key Insights
-                </CardTitle>
-                <CardDescription>
-                  Actionable takeaways from the conversation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
+              {/* Insights */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-light text-white">Insights</h3>
+                <ul className="space-y-4">
                   {data.analysis.insights?.map((insight, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-gray-700">{insight}</span>
+                    <li key={index} className="flex items-start gap-4 p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
+                      <div className="w-2 h-2 bg-white rounded-full mt-3 flex-shrink-0"></div>
+                      <span className="text-gray-200 leading-relaxed font-light">{insight}</span>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+
+            {/* Processing Details */}
+            {data.analysisMetadata && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-light text-white">Processing Details</h3>
+                <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <span className="text-gray-400 text-sm uppercase tracking-wider">AI Model</span>
+                      <p className="text-white font-light">{data.analysisMetadata.llmModel}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400 text-sm uppercase tracking-wider">Processed At</span>
+                      <p className="text-white font-light">
+                        {new Date(data.analysisMetadata.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center space-y-6 py-12">
+            <div className="w-16 h-16 mx-auto bg-gray-800 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-gray-600 rounded-full"></div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-light text-white mb-2">Analysis Pending</h2>
+              <p className="text-gray-400">
+                {data.feedback.status === 'processing' 
+                  ? 'Analysis is currently in progress' 
+                  : 'No analysis available yet'}
+              </p>
+            </div>
           </div>
         )}
 
         {/* Transcript Preview */}
         {data.hasTranscript && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-gray-500" />
-                Conversation Transcript
-              </CardTitle>
-              <CardDescription>
-                {data.transcriptEntries.length > 0 
-                  ? `${data.transcriptEntries.length} messages captured`
-                  : 'Transcript available'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.transcriptEntries.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {data.transcriptEntries.slice(0, 10).map((entry, index) => (
-                    <div key={index} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Badge variant="outline" className="capitalize">
-                        {entry.role}
-                      </Badge>
-                      <p className="text-gray-700 flex-1">{entry.content}</p>
-                      <span className="text-xs text-gray-500">
-                        {new Date(entry.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  ))}
-                  {data.transcriptEntries.length > 10 && (
-                    <p className="text-center text-sm text-gray-500 py-2">
+          <div className="space-y-6 mt-12">
+            <h3 className="text-xl font-light text-white">Transcript</h3>
+            {data.transcriptEntries.length > 0 ? (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {data.transcriptEntries.slice(0, 10).map((entry, index) => (
+                  <div key={index} className="flex gap-4 p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
+                    <Badge 
+                      className={`capitalize shrink-0 ${
+                        entry.role === 'user' 
+                          ? 'bg-gray-700 text-gray-200' 
+                          : 'bg-white text-black'
+                      }`}
+                    >
+                      {entry.role}
+                    </Badge>
+                    <p className="text-gray-200 flex-1 leading-relaxed font-light">{entry.content}</p>
+                    <span className="text-xs text-gray-500 shrink-0 mt-1">
+                      {new Date(entry.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))}
+                {data.transcriptEntries.length > 10 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-gray-400 bg-gray-900/30 rounded-lg py-2 px-4 border border-gray-800">
                       ... and {data.transcriptEntries.length - 10} more messages
                     </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-600">Transcript data available in legacy format</p>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-lg">
+                <p className="text-gray-300 font-light">Transcript data available</p>
+              </div>
+            )}
+          </div>
         )}
+
+        {/* Stats */}
+        <div className="mt-12 pt-8 border-t border-gray-800">
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <span>Messages: {data.transcriptEntries.length}</span>
+            <span>Status: {data.feedback.status}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
