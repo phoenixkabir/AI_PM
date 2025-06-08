@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { ArrowLeft } from 'lucide-react';
 
 interface AnalysisData {
@@ -35,11 +33,6 @@ export default function AnalysisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (feedbackId) {
-      fetchAnalysisData();
-    }
-  }, [feedbackId]);
 
   const fetchAnalysisData = async () => {
     try {
@@ -60,7 +53,13 @@ export default function AnalysisPage() {
     }
   };
 
-  const getSentimentColor = (sentiment: string) => {
+  useEffect(() => {
+    if (feedbackId) {
+      fetchAnalysisData();
+    }
+  }, [feedbackId]);
+
+  const getSentimentColor= (sentiment: string) => {
     switch (sentiment?.toLowerCase()) {
       case 'positive': return 'bg-white text-black';
       case 'negative': return 'bg-gray-800 text-white border border-gray-700';

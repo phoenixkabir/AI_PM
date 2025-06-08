@@ -117,7 +117,7 @@ Format your response as JSON with the following structure:
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
-    } catch (parseError) {
+    } catch {
       console.warn('Could not parse JSON from LLM response, using fallback format');
     }
 

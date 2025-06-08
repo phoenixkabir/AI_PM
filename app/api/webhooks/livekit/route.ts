@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { WebhookReceiver } from 'livekit-server-sdk';
 import { db } from "@/db"; // Assuming db instance is exported from '@/db'
-import { UserFeedback, TranscriptEntries, FeedbackAnalysis, ProductConversations } from "@/db/schema";
+import { UserFeedback, TranscriptEntries, ProductConversations } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 const apiKey = process.env.LIVEKIT_API_KEY;
@@ -394,15 +394,5 @@ async function processTranscriptWithLLM(
     
     throw error; // Re-throw to let caller handle it
   }
-}
-
-// Helper function to recover raw messages if needed (placeholder for future implementation)
-async function fetchRawMessagesFromLiveKit(roomSid: string) {
-  // Implementation depends on your LiveKit setup
-  // This could query LiveKit's history API or your own message storage
-  
-  // Placeholder implementation - you would implement this based on your LiveKit setup
-  console.log(`Attempting to recover messages for room: ${roomSid}`);
-  return [];
 }
 
